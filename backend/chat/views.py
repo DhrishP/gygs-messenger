@@ -54,13 +54,39 @@ def conversations_list(request):
             other_user = User(user_id=other_user_id)
             other_user.save()
             
-        # Check if conversation already exists (order independent)
-        conv = Conversation.objects(participants__all=[user, other_user], participants__size=2).first()
+        # Check if direct conversation already exists (order independent)
+        conv = Conversation.objects(participants__all=[user, other_user], participants__size=2, is_group=False).first()
         if not conv:
-            conv = Conversation(participants=[user, other_user])
+            conv = Conversation(participants=[user, other_user], is_group=False)
             conv.save()
             
         return Response(ConversationSerializer(conv).data)
+
+@api_view(['POST'])
+def create_group(request):
+    user_id = request.data.get('user_id')
+    name = request.data.get('name')
+    participant_ids = request.data.get('participant_ids', [])
+    
+    if not user_id or not name or not participant_ids:
+        return Response({'error': 'user_id, name, and participant_ids are required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+    # Make sure creator is in the participants list
+    if user_id not in participant_ids:
+        participant_ids.append(user_id)
+        
+    participants = []
+    for pid in participant_ids:
+        u = User.objects(user_id=pid).first()
+        if not u:
+            u = User(user_id=pid)
+            u.save()
+        participants.append(u)
+        
+    conv = Conversation(participants=participants, is_group=True, name=name)
+    conv.save()
+    
+    return Response(ConversationSerializer(conv).data)
 
 @api_view(['GET'])
 def messages_list(request, conversation_id):

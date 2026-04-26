@@ -1,4 +1,4 @@
-from mongoengine import Document, StringField, ReferenceField, ListField, DateTimeField, CASCADE
+from mongoengine import Document, StringField, ReferenceField, ListField, DateTimeField, CASCADE, BooleanField
 import datetime
 
 class User(Document):
@@ -7,6 +7,8 @@ class User(Document):
 
 class Conversation(Document):
     participants = ListField(ReferenceField(User, reverse_delete_rule=CASCADE))
+    is_group = BooleanField(default=False)
+    name = StringField(null=True, blank=True)
     created_at = DateTimeField(default=datetime.datetime.utcnow)
 
 class Message(Document):

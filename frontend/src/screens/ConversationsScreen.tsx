@@ -52,6 +52,20 @@ export default function ConversationsScreen({ navigation, route }: Props) {
     }
   };
 
+  const renderSkeleton = () => (
+    <View style={styles.listContainer}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <View key={i} style={styles.skeletonContainer}>
+          <View style={styles.skeletonAvatar} />
+          <View style={styles.skeletonContent}>
+            <View style={styles.skeletonTitle} />
+            <View style={styles.skeletonSubtitle} />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+
   const renderItem = ({ item }: { item: any }) => {
     const otherUser = item.participants.find((p: string) => p !== userId) || item.participants[0];
     
@@ -62,14 +76,27 @@ export default function ConversationsScreen({ navigation, route }: Props) {
       <TouchableOpacity 
         style={styles.itemContainer}
         activeOpacity={0.7}
-        onPress={() => navigation.navigate('Chat', { conversationId: item.id, userId, otherUserId: otherUser })}
+        onPress={() => navigation.navigate('Chat', { 
+          conversationId: item.id, 
+          userId, 
+          otherUserId: otherUser 
+        })}
       >
         <View style={[styles.avatar, { backgroundColor: avatarColor }]}>
           <Text style={styles.avatarText}>{otherUser.charAt(0).toUpperCase()}</Text>
         </View>
         <View style={styles.itemContent}>
-          <Text style={styles.itemTitle}>{otherUser}</Text>
-          <Text style={styles.itemSubtitle}>Tap to open chat</Text>
+          <View style={styles.itemHeader}>
+            <Text style={styles.itemTitle}>{otherUser}</Text>
+            {item.last_timestamp && (
+              <Text style={styles.timestampText}>
+                {new Date(item.last_timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </Text>
+            )}
+          </View>
+          <Text style={styles.itemSubtitle} numberOfLines={1}>
+            {item.last_message || "No messages yet"}
+          </Text>
         </View>
       </TouchableOpacity>
     );
@@ -96,7 +123,7 @@ export default function ConversationsScreen({ navigation, route }: Props) {
       </View>
 
       {loading ? (
-        <ActivityIndicator color="#6366F1" style={{ marginTop: 20 }} />
+        renderSkeleton()
       ) : conversations.length === 0 ? (
         <Text style={styles.emptyText}>No conversations yet.</Text>
       ) : (
@@ -158,7 +185,39 @@ const styles = StyleSheet.create({
   },
   avatarText: { color: '#FFF', fontSize: 20, fontWeight: 'bold' },
   itemContent: { flex: 1, justifyContent: 'center' },
-  itemTitle: { color: '#FFF', fontSize: 16, fontWeight: '600', marginBottom: 4 },
-  itemSubtitle: { color: '#888', fontSize: 13 },
-  emptyText: { color: '#666', textAlign: 'center', marginTop: 40, fontSize: 16 }
+  itemTitle: { color: '#FFF', fontSize: 16, fontWeight: '600' },
+  itemSubtitle: { color: '#888', fontSize: 13, marginTop: 2 },
+  itemHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  timestampText: { color: '#666', fontSize: 11 },
+  emptyText: { color: '#666', textAlign: 'center', marginTop: 40, fontSize: 16 },
+  
+  // Skeleton Styles
+  skeletonContainer: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    paddingVertical: 12, 
+    borderBottomWidth: 1, 
+    borderBottomColor: '#1A1A1A' 
+  },
+  skeletonAvatar: { 
+    width: 50, 
+    height: 50, 
+    borderRadius: 25, 
+    backgroundColor: '#1A1A1A', 
+    marginRight: 16 
+  },
+  skeletonContent: { flex: 1 },
+  skeletonTitle: { 
+    width: '40%', 
+    height: 14, 
+    backgroundColor: '#1A1A1A', 
+    borderRadius: 7, 
+    marginBottom: 8 
+  },
+  skeletonSubtitle: { 
+    width: '70%', 
+    height: 12, 
+    backgroundColor: '#1A1A1A', 
+    borderRadius: 6 
+  }
 });

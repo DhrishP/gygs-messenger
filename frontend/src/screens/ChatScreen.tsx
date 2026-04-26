@@ -10,6 +10,7 @@ export default function ChatScreen({ route }: Props) {
   const { conversationId, userId } = route.params;
   const [messages, setMessages] = useState<any[]>([]);
   const [inputText, setInputText] = useState('');
+  const [loading, setLoading] = useState(true);
   const ws = useRef<WebSocket | null>(null);
   const flatListRef = useRef<FlatList>(null);
 
@@ -37,6 +38,8 @@ export default function ChatScreen({ route }: Props) {
       });
     } catch (e) {
       console.error(e);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -125,6 +128,14 @@ export default function ChatScreen({ route }: Props) {
     );
   };
 
+  const renderSkeleton = () => (
+    <View style={styles.listContent}>
+      {[1, 2, 3, 4, 5, 6].map((i) => (
+        <View key={i} style={[styles.skeletonBubble, i % 2 === 0 ? styles.skeletonMyBubble : styles.skeletonOtherBubble]} />
+      ))}
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView 
@@ -132,15 +143,19 @@ export default function ChatScreen({ route }: Props) {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          keyExtractor={item => item.id}
-          renderItem={renderItem}
-          contentContainerStyle={styles.listContent}
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-          onLayout={() => flatListRef.current?.scrollToEnd({ animated: false })}
-        />
+        {loading ? (
+          renderSkeleton()
+        ) : (
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            keyExtractor={item => item.id}
+            renderItem={renderItem}
+            contentContainerStyle={styles.listContent}
+            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+            onLayout={() => flatListRef.current?.scrollToEnd({ animated: false })}
+          />
+        )}
         <View style={styles.inputArea}>
           <View style={styles.inputContainer}>
             <TextInput
@@ -235,5 +250,23 @@ const styles = StyleSheet.create({
     marginLeft: 8
   },
   sendBtnDisabled: { backgroundColor: '#333' },
-  sendBtnText: { color: '#FFF', fontWeight: 'bold', fontSize: 14 }
+  sendBtnText: { color: '#FFF', fontWeight: 'bold', fontSize: 14 },
+  
+  // Skeleton Styles
+  skeletonBubble: {
+    height: 44,
+    borderRadius: 20,
+    marginBottom: 16,
+    backgroundColor: '#1A1A1A'
+  },
+  skeletonMyBubble: {
+    width: '60%',
+    alignSelf: 'flex-end',
+    borderBottomRightRadius: 4
+  },
+  skeletonOtherBubble: {
+    width: '70%',
+    alignSelf: 'flex-start',
+    borderBottomLeftRadius: 4
+  }
 });

@@ -27,7 +27,7 @@ export default function ChatScreen({ route, navigation }: Props) {
     };
   }, []);
 
-  useGroupHeader(!!isGroup, route.params.participants, navigation);
+  useGroupHeader(isGroup ?? false, route.params.participants, navigation);
 
   const loadMessages = async () => {
     try {

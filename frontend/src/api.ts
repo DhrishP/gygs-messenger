@@ -29,9 +29,9 @@ export const createGroupConversation = async (userId: string, name: string, part
   return response.data as Conversation;
 };
 
-export const getMessages = async (conversationId: string): Promise<Message[]> => {
-  const response = await api.get(`/messages/${conversationId}/`);
-  return response.data as Message[];
+export const getMessages = async (conversationId: string, page: number = 1, size: number = 50): Promise<Message[]> => {
+  const response = await api.get(`/messages/${conversationId}/?page=${page}&size=${size}`);
+  return response.data.results as Message[];
 };
 
 export const markMessageSeen = async (messageId: string, userId: string): Promise<void> => {

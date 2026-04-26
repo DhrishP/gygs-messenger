@@ -1,8 +1,10 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert, KeyboardAvoidingView, Platform, SafeAreaView } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
 import { getMessages, deleteMessage, markMessageSeen, WS_URL } from '../api';
+import { Message } from '../types';
+import useGroupHeader from '../hooks/useGroupHeader';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
@@ -25,24 +27,7 @@ export default function ChatScreen({ route, navigation }: Props) {
     };
   }, []);
 
-  React.useLayoutEffect(() => {
-    if (isGroup && route.params.participants) {
-      navigation.setOptions({
-        headerRight: () => (
-          <TouchableOpacity 
-            onPress={() => {
-              Alert.alert('Group Members', route.params.participants?.join(', ') || '');
-            }}
-            style={{ padding: 8 }}
-          >
-            <Text style={{ color: '#6366F1', fontWeight: 'bold' }}>
-              👥 {route.params.participants?.length || 0}
-            </Text>
-          </TouchableOpacity>
-        ),
-      });
-    }
-  }, [navigation, isGroup, route.params.participants]);
+  useGroupHeader(!!isGroup, route.params.participants, navigation);
 
   const loadMessages = async () => {
     try {
@@ -118,7 +103,7 @@ export default function ChatScreen({ route, navigation }: Props) {
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  const renderItem = ({ item }: { item: any }) => {
+  const renderItem = useCallback(({ item }: { item: Message }) => {
     const isMe = item.sender === userId;
     const isSeen = item.seen_by.length > 0;
     
@@ -148,7 +133,7 @@ export default function ChatScreen({ route, navigation }: Props) {
         </TouchableOpacity>
       </View>
     );
-  };
+  }, [messages, userId, handleDelete, isGroup]);
 
   const renderSkeleton = () => (
     <View style={styles.listContent}>

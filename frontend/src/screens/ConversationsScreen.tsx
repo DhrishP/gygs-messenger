@@ -1,15 +1,16 @@
-import React, { useEffect, useState, useCallback, useLayoutEffect } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
 import { getConversations, createConversation, createGroupConversation } from '../api';
+import { Conversation } from '../types';
+import useGroupHeader from '../hooks/useGroupHeader';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Conversations'>;
 
 export default function ConversationsScreen({ navigation, route }: Props) {
   const { userId, onLogout } = route.params;
-  const [conversations, setConversations] = useState<any[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [newUserId, setNewUserId] = useState('');
   const [groupName, setGroupName] = useState('');
   const [isGroup, setIsGroup] = useState(false);
@@ -26,14 +27,10 @@ export default function ConversationsScreen({ navigation, route }: Props) {
     }
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      loadConversations();
-      return () => {};
-    }, [userId])
-  );
+  useGroupHeader(isGroup, undefined, navigation);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
+    loadConversations();
     navigation.setOptions({
       headerRight: () => (
         <TouchableOpacity onPress={onLogout} style={styles.logoutBtn}>
@@ -41,7 +38,7 @@ export default function ConversationsScreen({ navigation, route }: Props) {
         </TouchableOpacity>
       ),
     });
-  }, [navigation, onLogout]);
+  }, [userId, navigation, onLogout]);
 
   const handleStartConversation = async () => {
     if (!newUserId.trim()) return;
@@ -80,9 +77,9 @@ export default function ConversationsScreen({ navigation, route }: Props) {
     </View>
   );
 
-  const renderItem = ({ item }: { item: any }) => {
+  const renderItem = useCallback(({ item }: { item: Conversation }) => {
     const isGroupChat = item.is_group;
-    const title = isGroupChat ? item.name : (item.participants.find((p: string) => p !== userId) || item.participants[0]);
+    const title = (isGroupChat ? item.name : (item.participants.find((p: string) => p !== userId) || item.participants[0])) || "Unknown";
     
     // Generate a color based on username/groupname for avatar
     const avatarColor = `hsl(${title.length * 40}, 70%, 50%)`;
@@ -117,7 +114,7 @@ export default function ConversationsScreen({ navigation, route }: Props) {
         </View>
       </TouchableOpacity>
     );
-  };
+  }, [navigation, userId]);
 
   return (
     <View style={styles.container}>

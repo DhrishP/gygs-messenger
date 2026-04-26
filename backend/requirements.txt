@@ -1,0 +1,8 @@
+Django>=4.2,<6.1
+djangorestframework
+channels
+daphne
+django-cors-headers
+pymongo
+mongoengine
+django-rest-framework-mongoengine

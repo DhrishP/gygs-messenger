@@ -1,11 +1,15 @@
+import logging
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from .models import User, Conversation, Message
 from .serializers import UserSerializer, ConversationSerializer, MessageSerializer
+from . import services
 
 @api_view(['POST'])
 def register_user(request):
+    logger = logging.getLogger(__name__)
+    logger.info('User registration request')
     user_id = request.data.get('user_id')
     if not user_id:
         return Response({'error': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -19,6 +23,8 @@ def register_user(request):
 
 @api_view(['GET', 'POST'])
 def conversations_list(request):
+    logger = logging.getLogger(__name__)
+    logger.info('Fetching conversations list')
     user_id = request.query_params.get('user_id') or request.data.get('user_id')
     if not user_id:
         return Response({'error': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -64,37 +70,41 @@ def conversations_list(request):
 
 @api_view(['POST'])
 def create_group(request):
+    logger = logging.getLogger(__name__)
+    logger.info('Create group request received')
     user_id = request.data.get('user_id')
     name = request.data.get('name')
     participant_ids = request.data.get('participant_ids', [])
     
     if not user_id or not name or not participant_ids:
+        logger.warning('Missing fields in create_group payload')
         return Response({'error': 'user_id, name, and participant_ids are required'}, status=status.HTTP_400_BAD_REQUEST)
-        
-    # Make sure creator is in the participants list
-    if user_id not in participant_ids:
-        participant_ids.append(user_id)
-        
-    participants = []
-    for pid in participant_ids:
-        u = User.objects(user_id=pid).first()
-        if not u:
-            u = User(user_id=pid)
-            u.save()
-        participants.append(u)
-        
-    conv = Conversation(participants=participants, is_group=True, name=name)
-    conv.save()
     
+    conv = services.create_group_service(user_id, name, participant_ids)
+    logger.info(f'Group created with id {conv.id}')
     return Response(ConversationSerializer(conv).data)
 
 @api_view(['GET'])
 def messages_list(request, conversation_id):
-    messages = Message.objects(conversation=conversation_id).order_by('timestamp')
-    return Response(MessageSerializer(messages, many=True).data)
+    logger = logging.getLogger(__name__)
+    page = int(request.query_params.get('page', 1))
+    size = int(request.query_params.get('size', 50))
+    skip = (page - 1) * size
+    messages_qs = Message.objects(conversation=conversation_id).order_by('timestamp')
+    total = messages_qs.count()
+    messages = messages_qs.skip(skip).limit(size)
+    logger.info(f'Fetching messages for conversation {conversation_id}, page {page}, size {size}')
+    return Response({
+        'total': total,
+        'page': page,
+        'size': size,
+        'results': MessageSerializer(messages, many=True).data,
+    })
 
 @api_view(['POST'])
 def delete_message(request, message_id):
+    logger = logging.getLogger(__name__)
+    logger.info(f'Deleting message {message_id}')
     user_id = request.data.get('user_id')
     delete_for_everyone = request.data.get('delete_for_everyone', False)
     
@@ -117,6 +127,8 @@ def delete_message(request, message_id):
 
 @api_view(['POST'])
 def mark_seen(request, message_id):
+    logger = logging.getLogger(__name__)
+    logger.info(f'Marking message {message_id} as seen')
     user_id = request.data.get('user_id')
     msg = Message.objects(id=message_id).first()
     if not msg:

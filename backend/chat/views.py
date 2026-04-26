@@ -29,16 +29,32 @@ def conversations_list(request):
 
     if request.method == 'GET':
         conversations = Conversation.objects(participants=user)
-        return Response(ConversationSerializer(conversations, many=True).data)
+        conv_list = []
+        for conv in conversations:
+            last_msg = Message.objects(conversation=conv).order_by('-timestamp').first()
+            data = ConversationSerializer(conv).data
+            data['last_message'] = last_msg.content if last_msg else None
+            data['last_timestamp'] = last_msg.timestamp.isoformat() if last_msg else conv.created_at.isoformat()
+            conv_list.append(data)
+        
+        # Sort by latest message/activity
+        conv_list.sort(key=lambda x: x['last_timestamp'], reverse=True)
+        return Response(conv_list)
         
     elif request.method == 'POST':
         other_user_id = request.data.get('other_user_id')
+        if not other_user_id:
+             return Response({'error': 'other_user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+             
+        if other_user_id == user_id:
+             return Response({'error': 'cannot start chat with yourself'}, status=status.HTTP_400_BAD_REQUEST)
+
         other_user = User.objects(user_id=other_user_id).first()
         if not other_user:
             other_user = User(user_id=other_user_id)
             other_user.save()
             
-        # Check if conversation already exists
+        # Check if conversation already exists (order independent)
         conv = Conversation.objects(participants__all=[user, other_user], participants__size=2).first()
         if not conv:
             conv = Conversation(participants=[user, other_user])

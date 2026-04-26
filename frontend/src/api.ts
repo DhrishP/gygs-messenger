@@ -23,6 +23,11 @@ export const createConversation = async (userId: string, otherUserId: string) =>
   return response.data;
 };
 
+export const createGroupConversation = async (userId: string, name: string, participantIds: string[]) => {
+  const response = await api.post('/groups/', { user_id: userId, name, participant_ids: participantIds });
+  return response.data;
+};
+
 export const getMessages = async (conversationId: string) => {
   const response = await api.get(`/messages/${conversationId}/`);
   return response.data;

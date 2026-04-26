@@ -7,7 +7,7 @@ import { getMessages, deleteMessage, markMessageSeen, WS_URL } from '../api';
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
 export default function ChatScreen({ route }: Props) {
-  const { conversationId, userId } = route.params;
+  const { conversationId, userId, isGroup } = route.params;
   const [messages, setMessages] = useState<any[]>([]);
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(true);
@@ -110,6 +110,9 @@ export default function ChatScreen({ route }: Props) {
           onLongPress={() => handleDelete(item.id, item.sender)}
           style={[styles.messageBubble, isMe ? styles.myBubble : styles.otherBubble]}
         >
+          {isGroup && !isMe && (
+            <Text style={styles.senderName}>{item.sender}</Text>
+          )}
           <Text style={[styles.messageText, isMe ? styles.myText : styles.otherText]}>
             {item.content}
           </Text>
@@ -140,8 +143,8 @@ export default function ChatScreen({ route }: Props) {
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView 
         style={styles.keyboardView} 
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 90}
       >
         {loading ? (
           renderSkeleton()
@@ -201,6 +204,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1F1F1F', 
     borderBottomLeftRadius: 4 
   },
+  senderName: { color: '#6366F1', fontSize: 12, fontWeight: 'bold', marginBottom: 2 },
   messageText: { fontSize: 16, lineHeight: 22 },
   myText: { color: '#FFF' },
   otherText: { color: '#E0E0E0' },

@@ -3,7 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, TextInput, StyleSheet, Activity
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
-import { getConversations, createConversation } from '../api';
+import { getConversations, createConversation, createGroupConversation } from '../api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Conversations'>;
 
@@ -11,6 +11,8 @@ export default function ConversationsScreen({ navigation, route }: Props) {
   const { userId, onLogout } = route.params;
   const [conversations, setConversations] = useState<any[]>([]);
   const [newUserId, setNewUserId] = useState('');
+  const [groupName, setGroupName] = useState('');
+  const [isGroup, setIsGroup] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const loadConversations = async () => {
@@ -44,8 +46,20 @@ export default function ConversationsScreen({ navigation, route }: Props) {
   const handleStartConversation = async () => {
     if (!newUserId.trim()) return;
     try {
-      const conv = await createConversation(userId, newUserId.trim());
-      navigation.navigate('Chat', { conversationId: conv.id, userId, otherUserId: newUserId.trim() });
+      if (isGroup) {
+        if (!groupName.trim()) {
+           alert("Please enter a group name");
+           return;
+        }
+        const participants = newUserId.split(',').map(id => id.trim()).filter(id => id);
+        const conv = await createGroupConversation(userId, groupName.trim(), participants);
+        navigation.navigate('Chat', { conversationId: conv.id, userId, otherUserId: groupName.trim(), isGroup: true });
+        setGroupName('');
+        setIsGroup(false);
+      } else {
+        const conv = await createConversation(userId, newUserId.trim());
+        navigation.navigate('Chat', { conversationId: conv.id, userId, otherUserId: newUserId.trim(), isGroup: false });
+      }
       setNewUserId('');
     } catch (e) {
       console.error('Error starting conversation', e);
@@ -67,10 +81,11 @@ export default function ConversationsScreen({ navigation, route }: Props) {
   );
 
   const renderItem = ({ item }: { item: any }) => {
-    const otherUser = item.participants.find((p: string) => p !== userId) || item.participants[0];
+    const isGroupChat = item.is_group;
+    const title = isGroupChat ? item.name : (item.participants.find((p: string) => p !== userId) || item.participants[0]);
     
-    // Generate a color based on username for avatar
-    const avatarColor = `hsl(${otherUser.length * 40}, 70%, 50%)`;
+    // Generate a color based on username/groupname for avatar
+    const avatarColor = `hsl(${title.length * 40}, 70%, 50%)`;
 
     return (
       <TouchableOpacity 
@@ -79,15 +94,16 @@ export default function ConversationsScreen({ navigation, route }: Props) {
         onPress={() => navigation.navigate('Chat', { 
           conversationId: item.id, 
           userId, 
-          otherUserId: otherUser 
+          otherUserId: title,
+          isGroup: isGroupChat
         })}
       >
         <View style={[styles.avatar, { backgroundColor: avatarColor }]}>
-          <Text style={styles.avatarText}>{otherUser.charAt(0).toUpperCase()}</Text>
+          <Text style={styles.avatarText}>{isGroupChat ? '👥' : title.charAt(0).toUpperCase()}</Text>
         </View>
         <View style={styles.itemContent}>
           <View style={styles.itemHeader}>
-            <Text style={styles.itemTitle}>{otherUser}</Text>
+            <Text style={styles.itemTitle}>{title}</Text>
             {item.last_timestamp && (
               <Text style={styles.timestampText}>
                 {new Date(item.last_timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -109,14 +125,35 @@ export default function ConversationsScreen({ navigation, route }: Props) {
       </View>
       
       <View style={styles.newChatContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="New chat (enter User ID)"
-          placeholderTextColor="#666"
-          value={newUserId}
-          onChangeText={setNewUserId}
-          autoCapitalize="none"
-        />
+        <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+            <TouchableOpacity onPress={() => setIsGroup(false)} style={[styles.tabBtn, !isGroup && styles.tabActive]}>
+               <Text style={[styles.tabText, !isGroup && styles.tabTextActive]}>Direct Message</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setIsGroup(true)} style={[styles.tabBtn, isGroup && styles.tabActive]}>
+               <Text style={[styles.tabText, isGroup && styles.tabTextActive]}>Group Chat</Text>
+            </TouchableOpacity>
+          </View>
+          
+          {isGroup && (
+            <TextInput
+              style={[styles.input, { marginBottom: 8 }]}
+              placeholder="Group Name"
+              placeholderTextColor="#666"
+              value={groupName}
+              onChangeText={setGroupName}
+            />
+          )}
+          
+          <TextInput
+            style={styles.input}
+            placeholder={isGroup ? "User IDs (comma separated)" : "New chat (enter User ID)"}
+            placeholderTextColor="#666"
+            value={newUserId}
+            onChangeText={setNewUserId}
+            autoCapitalize="none"
+          />
+        </View>
         <TouchableOpacity style={styles.startBtn} onPress={handleStartConversation}>
           <Text style={styles.startBtnText}>Start</Text>
         </TouchableOpacity>
@@ -219,5 +256,23 @@ const styles = StyleSheet.create({
     height: 12, 
     backgroundColor: '#1A1A1A', 
     borderRadius: 6 
+  },
+  tabBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginRight: 8,
+    backgroundColor: '#1A1A1A'
+  },
+  tabActive: {
+    backgroundColor: '#3730A3'
+  },
+  tabText: {
+    color: '#888',
+    fontSize: 12,
+    fontWeight: 'bold'
+  },
+  tabTextActive: {
+    color: '#FFF'
   }
 });

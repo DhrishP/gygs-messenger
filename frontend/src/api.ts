@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 // Change this to the Railway URL when deploying or use local IP for emulator
-export const API_URL = 'http://10.192.30.33:8000/api/chat';
-export const WS_URL = 'ws://10.192.30.33:8000/ws/chat';
+export const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/chat';
+export const WS_URL = process.env.EXPO_PUBLIC_WS_URL || 'ws://127.0.0.1:8000/ws/chat';
 
 export const api = axios.create({
   baseURL: API_URL,

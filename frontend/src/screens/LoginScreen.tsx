@@ -32,12 +32,13 @@ export default function LoginScreen({ navigation, route }: any) {
         <Text style={styles.subtitle}>Enter a dummy username or ID to continue.</Text>
         
         <TextInput
-          style={styles.input}
+          style={[styles.input, { color: '#FFF' }]}
           placeholder="e.g. alice, bob123"
           placeholderTextColor="#888"
           value={userId}
           onChangeText={setUserId}
           autoCapitalize="none"
+          keyboardAppearance="dark"
         />
         
         <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>

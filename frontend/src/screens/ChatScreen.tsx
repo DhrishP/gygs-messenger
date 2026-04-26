@@ -162,12 +162,13 @@ export default function ChatScreen({ route }: Props) {
         <View style={styles.inputArea}>
           <View style={styles.inputContainer}>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { color: '#FFF' }]}
               value={inputText}
               onChangeText={setInputText}
               placeholder="Message..."
               placeholderTextColor="#666"
               multiline
+              keyboardAppearance="dark"
             />
             <TouchableOpacity 
               style={[styles.sendBtn, !inputText.trim() && styles.sendBtnDisabled]} 

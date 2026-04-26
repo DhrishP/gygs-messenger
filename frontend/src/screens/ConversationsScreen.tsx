@@ -125,7 +125,7 @@ export default function ConversationsScreen({ navigation, route }: Props) {
       </View>
       
       <View style={styles.newChatContainer}>
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, marginRight: 10 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
             <TouchableOpacity onPress={() => setIsGroup(false)} style={[styles.tabBtn, !isGroup && styles.tabActive]}>
                <Text style={[styles.tabText, !isGroup && styles.tabTextActive]}>Direct Message</Text>
@@ -137,21 +137,23 @@ export default function ConversationsScreen({ navigation, route }: Props) {
           
           {isGroup && (
             <TextInput
-              style={[styles.input, { marginBottom: 8 }]}
+              style={[styles.input, { marginBottom: 8, color: '#FFF' }]}
               placeholder="Group Name"
               placeholderTextColor="#666"
               value={groupName}
               onChangeText={setGroupName}
+              keyboardAppearance="dark"
             />
           )}
           
           <TextInput
-            style={styles.input}
+            style={[styles.input, { color: '#FFF' }]}
             placeholder={isGroup ? "User IDs (comma separated)" : "New chat (enter User ID)"}
             placeholderTextColor="#666"
             value={newUserId}
             onChangeText={setNewUserId}
             autoCapitalize="none"
+            keyboardAppearance="dark"
           />
         </View>
         <TouchableOpacity style={styles.startBtn} onPress={handleStartConversation}>
@@ -187,13 +189,11 @@ const styles = StyleSheet.create({
     marginBottom: 10 
   },
   input: { 
-    flex: 1, 
     backgroundColor: '#1A1A1A', 
     color: '#FFF', 
     paddingHorizontal: 16, 
     paddingVertical: 12, 
     borderRadius: 24, 
-    marginRight: 10,
     borderWidth: 1,
     borderColor: '#333'
   },

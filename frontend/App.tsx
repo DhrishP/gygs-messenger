@@ -12,7 +12,7 @@ import LoginScreen from './src/screens/LoginScreen';
 export type RootStackParamList = {
   Login: { onLogin: (id: string) => void };
   Conversations: { userId: string; onLogout: () => void };
-  Chat: { conversationId: string; userId: string; otherUserId: string; isGroup?: boolean };
+  Chat: { conversationId: string; userId: string; otherUserId: string; isGroup?: boolean; participants?: string[] };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();

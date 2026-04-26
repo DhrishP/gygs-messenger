@@ -53,12 +53,12 @@ export default function ConversationsScreen({ navigation, route }: Props) {
         }
         const participants = newUserId.split(',').map(id => id.trim()).filter(id => id);
         const conv = await createGroupConversation(userId, groupName.trim(), participants);
-        navigation.navigate('Chat', { conversationId: conv.id, userId, otherUserId: groupName.trim(), isGroup: true });
+        navigation.navigate('Chat', { conversationId: conv.id, userId, otherUserId: groupName.trim(), isGroup: true, participants: conv.participants });
         setGroupName('');
         setIsGroup(false);
       } else {
         const conv = await createConversation(userId, newUserId.trim());
-        navigation.navigate('Chat', { conversationId: conv.id, userId, otherUserId: newUserId.trim(), isGroup: false });
+        navigation.navigate('Chat', { conversationId: conv.id, userId, otherUserId: newUserId.trim(), isGroup: false, participants: conv.participants });
       }
       setNewUserId('');
     } catch (e) {
@@ -95,7 +95,8 @@ export default function ConversationsScreen({ navigation, route }: Props) {
           conversationId: item.id, 
           userId, 
           otherUserId: title,
-          isGroup: isGroupChat
+          isGroup: isGroupChat,
+          participants: item.participants
         })}
       >
         <View style={[styles.avatar, { backgroundColor: avatarColor }]}>

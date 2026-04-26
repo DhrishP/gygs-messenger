@@ -6,7 +6,7 @@ import { getMessages, deleteMessage, markMessageSeen, WS_URL } from '../api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
-export default function ChatScreen({ route }: Props) {
+export default function ChatScreen({ route, navigation }: Props) {
   const { conversationId, userId, isGroup } = route.params;
   const [messages, setMessages] = useState<any[]>([]);
   const [inputText, setInputText] = useState('');
@@ -24,6 +24,25 @@ export default function ChatScreen({ route }: Props) {
       }
     };
   }, []);
+
+  React.useLayoutEffect(() => {
+    if (isGroup && route.params.participants) {
+      navigation.setOptions({
+        headerRight: () => (
+          <TouchableOpacity 
+            onPress={() => {
+              Alert.alert('Group Members', route.params.participants?.join(', ') || '');
+            }}
+            style={{ padding: 8 }}
+          >
+            <Text style={{ color: '#6366F1', fontWeight: 'bold' }}>
+              👥 {route.params.participants?.length || 0}
+            </Text>
+          </TouchableOpacity>
+        ),
+      });
+    }
+  }, [navigation, isGroup, route.params.participants]);
 
   const loadMessages = async () => {
     try {
